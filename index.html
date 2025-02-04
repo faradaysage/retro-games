@@ -46,15 +46,15 @@
 
     <div class="game-container">
         <div class="game" id="game-nowhere" onclick="loadGame('nowhere.jsdos', this)">
-            <img src="/img/NorthOfNowhere.PNG" alt="North of Nowhere">
+            <img src="img/NorthOfNowhere.PNG" alt="North of Nowhere">
             <p>North of Nowhere</p>
         </div>
         <div class="game" id="game-troll" onclick="loadGame('troll.jsdos', this)">
-            <img src="/img/Troll.PNG" alt="Troll">
+            <img src="img/Troll.PNG" alt="Troll">
             <p>The Adventures of Something That Looks Like an Evil Troll</p>
         </div>
         <div class="game" id="game-ltperry" onclick="loadGame('ltperry.jsdos', this)">
-            <img src="/img/LtPerry.PNG" alt="Lt. Perry">
+            <img src="img/LtPerry.PNG" alt="Lt. Perry">
             <p>Lt. Perry: Operation Keish</p>
         </div>
     </div>
@@ -70,7 +70,7 @@
             element.classList.add('selected');
             
             // Load the game in JS-DOS
-            Dos(document.getElementById("dosbox")).run("/games/" + gameFile, {
+            Dos(document.getElementById("dosbox")).run("games/" + gameFile, {
                 disablePersistentStorage: true
             });
         }
