@@ -1,0 +1,52 @@
+CC  = wcc386 /3s
+#LD  = wlink
+CPP = wpp386 
+LD  = wcl386 -zq -l=dos4g
+#AS  = tasm -m -q -ml -p -t -i..\include
+#LIB = wlib -b -q
+
+makefile : game.exe
+    @echo done.
+
+clean :
+        @del *.obj
+#    @del play.obj > nul
+#    @del setup.obj > nul
+#    @del m2dsm.obj > nul
+#    @del examp??.obj > nul
+#   @del *.bak > nul
+
+#examp10.exe : examp10.obj examp10b.obj
+#    $(LD) examp10.obj examp10b.obj
+
+game.obj : main2.h inventry.h main.h sprite.h error.h graphics.h map.h objects.h enemyobj.h colision.h game.c wad.h
+    $(CC) game.c
+graphics.obj : graphics.h graphics.c
+    $(CC) graphics.c
+gamemem.obj : gamemem.h gamemem.c
+    $(CC) gamemem.c
+inventry.obj : inventry.h inventry.c
+    $(CC) inventry.c
+keyboard.obj : keyboard.h keyboard.c
+    $(CC) keyboard.c
+sound.obj : sound.h sound.c
+    $(CC) sound.c
+text.obj : graphics.h text.h text.c
+    $(CC) text.c
+timer.obj : timer.h timer.c
+    $(CC) timer.c
+wad.obj : wad.h wad.c
+    $(CC) wad.c
+
+game.exe : game.obj sound.obj graphics.obj gamemem.obj inventry.obj keyboard.obj text.obj timer.obj wad.obj 
+        $(LD) game sound graphics gamemem inventry keyboard text timer wad 
+#        $(LD) @game
+
+.obj.exe :
+    $(LD) $<
+
+.c.obj:
+    $(CC) $<
+
+#.asm.obj:
+#    $(AS) $<

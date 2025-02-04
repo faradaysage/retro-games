@@ -1,0 +1,6 @@
+WADFILE chat.wad
+CHATBG chat.pcx
+COLORBAR colorbar.pcx
+FONTFILE chatfont.fnt
+DEFAULTNAME anon
+

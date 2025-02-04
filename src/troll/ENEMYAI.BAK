@@ -1,0 +1,22 @@
+#ifndef ENEMYAI_H
+#define ENEMYAI_H
+
+/* when you add an intelligence be sure to update DrawObjects()
+	where the AI is called */
+
+void Enemy0AI(object_type *object);
+
+void Enemy0AI(object_type *object){
+	static char last=0;
+
+	if( last ){
+		++(object->info->ulx_vb);
+		last = !last;
+	}
+	else {
+		--(object->info->ulx_vb);
+		last = !last;
+	}
+}
+
+#endif

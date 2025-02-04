@@ -1,0 +1,216 @@
+#ifndef SPRITE_H
+#define SPRITE_H
+
+#include "graphics.h"
+#include "error.h"
+#include "map.h"
+#include "enemyobj.h"
+
+/* finds the middle-bottom (x,y) of a sprite's position */
+#define MidBottomX(sprite)   (((sprite)->ulx)+(((sprite)->cel[0]->width)>>1))  /* >>1 = div 2 */
+#define MidBottomY(sprite)   (((sprite)->uly)+((sprite)->cel[0]->height))
+
+/* maximum number of directions that a sprite can face. */
+#define MAXDIRECTIONS 4
+#define IncrCurFrame(x)    ++(x)->curframe;if( (x)->curframe == (x)->frames ) (x)->curframe = 0
+#define ChangeFace(x,y)    (x)->facing = (y)
+
+enum face_tag { south = 0, east, west, north };
+
+typedef struct background_tag {
+	vbackground_type *actual;
+	map_type *map;
+} background_type;
+
+typedef struct directions_tag {
+        signed char north,
+		  south,
+		  east,
+		  west;
+} directions_type;
+
+typedef struct sprite_tag {
+	image_type **cel;      /* array of sprite's frames */
+	char frames;
+        short ulx, uly;
+	char status;
+	char curframe;
+	char facing;
+	char directions;  /* number of directions the sprite can face */
+	char speed;
+	char auto_incr;
+	directions_type dir_struct;
+} sprite_type;
+
+sprite_type ***sprite_table;
+
+void OpenBackground( background_type **background, char *filenames[] );
+void PutBackground( background_type *background, char *where );
+void CloseBackground( background_type **background);
+
+void OpenSprite( sprite_type **sprite, char *filenames[] );
+void PutSprite( sprite_type *sprite, char *where );
+void PutSpriteMosaic( sprite_type *sprite, char *where );
+void CloseSprite( sprite_type **sprite );
+
+char CelIndexNum(sprite_type *sprite);
+
+/* table of sprite pointers to enemy/objects */
+void CreateSpriteTable( void );
+void DestroySpriteTable( void );
+
+char CelIndexNum(sprite_type *sprite){
+	if( sprite->facing == north )
+		return( ((sprite->frames*sprite->dir_struct.north)+sprite->curframe) );
+	if( sprite->facing == south )
+		return( ((sprite->frames*sprite->dir_struct.south)+sprite->curframe) );
+	if( sprite->facing == east )
+		return( ((sprite->frames*sprite->dir_struct.east)+sprite->curframe) );
+	if( sprite->facing == west )
+		return( ((sprite->frames*sprite->dir_struct.west)+sprite->curframe) );
+        return( -1 );
+}
+
+
+
+void CreateSpriteTable( void ){
+	int i;
+
+															 /* enemy/objects */
+	if( (sprite_table = (sprite_type ***)malloc( sizeof(sprite_type **)*3 )) == NULL)
+		Error( "Not enough memory.\n" );
+
+        if( (sprite_table[ENEMY_INDEX]  = (sprite_type **)malloc( sizeof( sprite_type *)*NUM_ENEMYS )) == NULL)
+		Error( "Not enough memory.\n" );
+
+        if( (sprite_table[OBJECT_INDEX] = (sprite_type **)malloc( sizeof( sprite_type *)*NUM_OBJECTS )) == NULL )
+		Error( "Not enough memory.\n" );
+
+        if( (sprite_table[CHARACTER_INDEX] = (sprite_type **)malloc( sizeof( sprite_type *)*NUM_CHARACTERS )) == NULL )
+		Error( "Not enough memory.\n" );
+
+	for(i=0; i<NUM_ENEMYS; ++i )
+		OpenSprite( &(sprite_table[ENEMY_INDEX][i]), enemy_filenames[i] );
+
+	for(i=0; i<NUM_OBJECTS; ++i )
+		OpenSprite( &(sprite_table[OBJECT_INDEX][i]), object_filenames[i] );
+
+	for(i=0; i<NUM_CHARACTERS; ++i )
+		OpenSprite( &(sprite_table[CHARACTER_INDEX][i]), character_filenames[i] );
+
+}
+
+void DestroySpriteTable( void ){
+	int i;
+	for(i=0; i<NUM_ENEMYS; ++i )
+		CloseSprite( &(sprite_table[ENEMY_INDEX][i]) );
+	for(i=0; i<NUM_OBJECTS; ++i )
+		CloseSprite( &(sprite_table[OBJECT_INDEX][i]) );
+	for(i=0; i<NUM_CHARACTERS; ++i )
+		CloseSprite( &(sprite_table[CHARACTER_INDEX][i]) );
+	free( sprite_table[ENEMY_INDEX] );
+	free( sprite_table[OBJECT_INDEX] );
+	free( sprite_table[CHARACTER_INDEX] );
+	free( sprite_table );
+}
+
+void OpenBackground( background_type **background, char *filenames[] ) {
+	if( ((*background)=(background_type *)malloc( sizeof(background_type) ))==NULL)
+		Error( "Not enough memory.\n" );
+	open_vbackground( filenames[0], &((*background)->actual)    );
+	OpenMap( filenames[1], &((*background)->map) );
+}
+
+void PutBackground( background_type *background, char *where ) {
+	put_vbackground( background->actual, where );
+}
+
+void CloseBackground( background_type **background ) {
+        close_vbackground( &((*background)->actual) );
+	DestroyMap( &((*background)->map) );
+	free( *background );
+}
+
+/* OpenSprite()
+** pass the pointer to a pointer of a sprite (malloc reasons)
+** also pass an array of filenames to include in the sprite's frames
+** first string in array is number of files
+*/
+
+void OpenSprite( sprite_type **sprite, char *filenames[] ) {
+	int i, frames=0, directions=0, default_index;
+
+	frames = atoi(filenames[0]);      /* first entry, num frames */
+	directions = atoi(filenames[1]);  /* second, num directions */
+        if( ((*sprite)=(sprite_type *)malloc( sizeof(sprite_type) )) == NULL )
+		Error( "Not enough memory.\n" );
+	if( ((*sprite)->cel=(image_type **)malloc( sizeof(image_type *)*(frames*directions) )) == NULL )
+		Error( "Not enough memory.\n" );
+			 /* maximum number of directions that a sprite can face. */
+
+	for(i=0; i < (frames*directions); ++i ){
+		open_image( filenames[i+3], &((*sprite)->cel[i]) );
+	}
+
+	(*sprite)->dir_struct.north = -1;  /* intialize */
+	(*sprite)->dir_struct.south = -1;
+	(*sprite)->dir_struct.east  = -1;
+	(*sprite)->dir_struct.west  = -1;
+
+	for(i=0; i<directions; ++i ){
+		if( filenames[2][i] == 'N' )
+			(*sprite)->dir_struct.north = i;  /* sprite can face north */
+		if( filenames[2][i] == 'E' )
+			(*sprite)->dir_struct.east = i;  /* sprite can face east */
+		if( filenames[2][i] == 'W' )
+			(*sprite)->dir_struct.west = i;  /* sprite can face west */
+		if( filenames[2][i] == 'S' )
+			(*sprite)->dir_struct.south = i;  /* sprite can face south */
+	}
+	if( filenames[ 2 /*dir list*/][ directions ] != '\0' )
+		default_index = directions;  /* determine default face */
+	else
+		default_index = 0;
+
+	if( filenames[2][default_index] == 'N' )
+		(*sprite)->facing = north;
+	if( filenames[2][default_index] == 'E' )
+		(*sprite)->facing = east;
+	if( filenames[2][default_index] == 'W' )
+		(*sprite)->facing = west;
+	if( filenames[2][default_index] == 'S' )
+		(*sprite)->facing = south;
+
+	(*sprite)->frames = frames;
+	(*sprite)->status = 0;
+	(*sprite)->curframe = 0;
+	(*sprite)->ulx = (*sprite)->uly = 0;
+	(*sprite)->directions = directions;
+        (*sprite)->speed = 1;
+	(*sprite)->auto_incr = 1;   /* All sprites default to automatically incremented */
+}
+
+void PutSprite( sprite_type *sprite, char *where ) {
+        put_image( sprite->cel[ CelIndexNum(sprite) ], sprite->ulx, sprite->uly, 0, where );
+}
+
+void PutSpriteMosaic( sprite_type *sprite, char *where ) {
+        static int block_size = 1;
+
+        Mosaic( sprite->cel[ CelIndexNum(sprite) ], block_size, sprite->ulx, sprite->uly, 0, where );
+
+        ++block_size;
+        if( block_size > 3 ) block_size = 1;
+}
+
+void CloseSprite( sprite_type **sprite ) {
+	int i;
+
+	for(i=0;i<((*sprite)->frames*(*sprite)->directions);++i)
+		close_image( &((*sprite)->cel[i]) );
+
+	free( (*sprite)->cel );
+	free( (*sprite) );
+}
+
+#endif

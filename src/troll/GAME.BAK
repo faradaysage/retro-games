@@ -1,0 +1,281 @@
+#include <stdio.h>
+#include <stdarg.h>
+#include <dos.h>
+#include <fcntl.h>
+/*
+**      game.H
+**
+**      typedefs and defines for all graphic routines
+*/
+
+/* holds the colors for screen  */
+
+unsigned char palette[768];  
+
+/* defines the transparency color, used for displaying images with a
+** background transparency.
+*/
+
+#define TRANSPARENT 0
+
+typedef struct
+{
+	char    manufacturer;
+	char    version;
+	char    encoding;
+	char    bits_per_pixel;
+	short   xmin,ymin;
+	short   xmax,ymax;
+	short   hres;
+	short   vres;
+	char    pallete[48];
+	char    reserved;
+	char    colour_planes;
+	short   bytes_per_line;
+	short   pallete_type;
+	char    filler[58];
+} PCXHEAD;
+
+/*      The variable header is a struct that will contain all the usefull picture
+	information shown in the above fields.  */
+
+PCXHEAD header;
+
+
+/*      This is the image struct.  It contains all the information relating to a
+**      given image
+*/
+
+typedef struct
+{
+	char    *bitmap;                // Pointer to the bitmap
+	short   width;                  // The width of the image for screen coords
+	short   height;                 // The height of the image for screen coords
+} image_type;
+
+/* These are the function prototypes for the graphics functions */
+
+void cpalette(unsigned char color, char r, char g, char b );
+void init(void);                                                /* start graphics   */
+void deinit(void);                                              /* return to normal */
+void load_palette(char *filename);
+void setVGApalette(char *p);                    /* set the vga pallete  */
+void open_image(char *filename, image_type *image);
+void put_image(image_type *image, long ulx, long uly, unsigned char *where);
+void Wait_For_Sync(void);
+void SetPaletteBlack(void);
+void FadeIn(char VGApalette[768], long wait);
+void ExitError(char *format, ...);
+
+void ExitError(char *format, ...)
+{
+	va_list list;
+	static char formatBuffer[256];
+	va_start(list, format);
+	vsprintf(formatBuffer, format, list);
+	deinit();
+	printf("ERROR: %s\n",formatBuffer);
+	exit(1);
+}
+
+
+void open_image (char *filename, image_type *image)
+{
+	long size,x,c,count;
+	long n;
+	long i;		// counter variable
+	long inc;
+	FILE *fp;	// pointer to the file the tile is saved in
+
+	image = (image_type *)malloc( sizeof(image_type) );
+
+	c=0;
+
+	if((fp=fopen(filename,"rb")) != NULL)
+		{
+			/* Checks to make sure a valid filename was used */
+			/* First read in the header */
+		if(fread((char *) &header,1,sizeof(PCXHEAD),fp) == sizeof(PCXHEAD))
+		{
+			/*check to make sure it's a picture */
+
+			if(header.manufacturer==0x0a && header.version ==5)
+			{
+				if(!fseek(fp,-769L,SEEK_END))
+				{
+					if(fgetc(fp) == 0x0c && fread(palette,1,768,fp) == 768)
+					{
+						image->width = (header.xmax - header.xmin) + 1;
+						image->height = (header.ymax - header.ymin) + 1;
+						/* Checks to make sure the tile is the correct size */
+							fseek(fp,128L,SEEK_SET);
+						image->bitmap = (char *)malloc( image->width*image->height );
+							/*allocate a big buffer */
+							//bytes=header.bytes_per_line;
+					}
+					else
+						ExitError("reading pallete");
+				}
+				else
+					ExitError("seeking to pallete");
+			}
+			else
+				ExitError("not a 256 color pcx file.");
+		}
+		else
+			ExitError("reading %s.",filename);
+	}
+	else
+		ExitError("opening %s.\n",filename);
+
+/***********************************************************************/
+/* This is a routine to decode/decompress the .pcx file into a bitmap */
+	for (i = 0; i < (image->width * image->height); ++i)
+	{
+		c=fgetc(fp) & 0xff;  /* if it's a run of bytes field */
+
+		if((c & 0xc0) == 0xc0)
+		{	/* and off the high bits */
+			x=c & 0x3f;
+			/* run the byte */
+			c=fgetc(fp);
+			while(x--)
+			{
+				image->bitmap[i++] = c;
+			}
+			i--;
+		}
+		else	/*else just store it */
+		{
+			image->bitmap[i] = c;
+		}
+	}
+	fclose(fp);
+}
+/*
+**      put_image()
+**      PRECONDITION : pic is the tile to display, ulx and uly are the
+**                     screen coordinates where the tile should be displayed,
+**                     and where is the buffer to put the tile.
+**      POSTCONDITION: the tile is displayed to where.  No transparency
+**                     checking or clipping is needed due to the nature
+**                     of the use of the tiles.  
+*/
+
+
+void put_image(image_type *image, long ulx, long uly, unsigned char *where)
+{
+	int x,
+	    y,
+	    byte = 0;
+
+	
+	for(y = uly; y < uly + (image->height); ++y)
+	{
+		for(x = ulx; x < ulx + (image->width); ++x)
+		{
+			where[( x + (y << 8) + (y << 6))] = image->bitmap[byte];
+			byte++;
+		}
+	}
+}
+
+
+/*
+**      cpalette()
+**      PRECONDITION : color represents the current color index to be changed
+**                     r, g, and b are the red/green/blue values to set it to
+**      POSTCONDITION: The color in the palette has been changed
+*/
+
+void cpalette(unsigned char color, char r, char g, char b)
+{
+	outp(0x3c8, color );
+	outp(0x3c9, r     );
+	outp(0x3c9, g     );
+	outp(0x3c9, b     );
+}
+
+/*
+**      setVGApalette()
+**      PRECONDITION : p contains the current palette mapping
+**      POSTCONDITION: sets the VGA palette to the RGB buffer p
+*/
+
+void setVGApalette(char *p)
+{
+	int cv;
+	for(cv = 0; cv <= 255; cv++)
+			cpalette(cv,p[cv*3],p[cv*3+1],p[cv*3+2]);
+
+}
+
+/*
+**      init()
+**      PRECONDITION : none
+**      POSTCONDITION: the video card is set to 320x200x256 VGA mode 13h
+*/
+
+void init(void)
+{
+	union REGS regs;
+	regs.x.ax=0x13;
+	int386(0x10,&regs,&regs);
+}
+
+/*
+**      deinit()
+**      PRECONDITION : none
+**      POSTCONDITION: the video card is set to 80x25 text mode
+*/
+
+void  deinit(void)
+{
+	union REGS regs;
+	regs.x.ax=0x3;
+	int386(0x10,&regs,&regs);
+}
+
+
+/*
+**      load_palette()
+**      PRECONDITION : filename contains the PCX file from which to read
+**                     the palette
+**      POSTCONDITION: filename's palette is read in to the palette array.
+*/
+
+void load_palette(char *filename)
+{
+	int i,j;
+	// Seek to start of palette, which is always 768 bytes
+	//  from end of file:
+	int pcxfile;
+
+	pcxfile=open(filename, O_BINARY);
+
+	lseek(pcxfile, -768L, SEEK_END);
+
+	// Read all 768 bytes of palette into array:
+
+	read(pcxfile,palette,3*256);
+
+	// Adjust for required bit shift:
+
+	for (i = 0; i < 256; i++)
+		for (j = 0; j<3; j++)
+			palette[i * 3 + j] = palette[i * 3 + j] >> 2;
+}
+
+/*
+**      Wait_For_Sync()
+**      PRECONDITION : none
+**      POSTCONDITION: Waits for a vertical Sync, used for syncing with
+**                     the VGA adapter so "shearing" doesn't occur.
+*/
+
+void Wait_For_Sync(void)
+{
+ //	long cv=0;
+	while(inp(0X3DA) & 0x08);
+	while(!(inp(0x3DA) & 0X08));
+}

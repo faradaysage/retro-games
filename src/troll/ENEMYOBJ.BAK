@@ -1,0 +1,17 @@
+#ifndef ENEMYOBJ_H
+#define ENEMYOBJ_H
+
+#define NUM_ENEMYS 2
+#define ENEMY_INDEX 0  /* index in sprite table array (0 or 1) */
+
+#define NUM_OBJECTS 0
+#define OBJECT_INDEX 1
+						  /* frames, num directions, directions, files in order of directions */
+					/* num of fields */
+char *enemy_filenames[NUM_ENEMYS][20]= { { "5", "1", "S", "c:\\game\\blob.pcx", "c:\\game\\blob2.pcx", "c:\\game\\blob3.pcx", "c:\\game\\blob2.pcx", "c:\\game\\blob.pcx" },
+													 { "4", "1", "S", "c:\\game\\fire.pcx", "c:\\game\\fire2.pcx", "c:\\game\\fire3.pcx", "c:\\game\\fire4.pcx" },
+													 { "4", "2", "WEE", "c:\\game\\bubbaw1.pcx", "c:\\game\\bubbaw2.pcx", "c:\\game\\bubbaw3.pcx", "c:\\game\\bubbaw4.pcx", "c:\\game\\bubbae1.pcx", "c:\\game\\bubbae2.pcx", "c:\\game\\bubbae3.pcx", "c:\\game\\bubbae4.pcx"} };
+
+char *object_filenames[1][1]= {{"1"}};
+
+#endif

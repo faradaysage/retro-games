@@ -1,0 +1,21 @@
+graphics.h(4): Error! E1055: Unable to open 'stdio.h'
+graphics.h(5): Error! E1055: Unable to open 'dos.h'
+graphics.h(6): Error! E1055: Unable to open 'fcntl.h'
+graphics.h(7): Error! E1055: Unable to open 'conio.h'
+error.h(6): Error! E1055: Unable to open 'stdarg.h'
+error.h(13): Error! E1011: Symbol 'va_list' has not been declared
+error.h(13): Error! E1009: Expecting ';' but found 'list'
+error.h(14): Error! E1077: Missing '}'
+error.h(15): Error! E1116: An id list not allowed except for function definition
+error.h(16): Error! E1116: An id list not allowed except for function definition
+error.h(18): Error! E1009: Expecting ')' but found 'ERROR: %s\n'
+error.h(18): Error! E1026: Invalid declarator
+error.h(18): Error! E1009: Expecting ',' but found 'ERROR: %s\n'
+error.h(18): Error! E1026: Invalid declarator
+error.h(18): Error! E1024: Declared symbol 'formatBuffer' is not in parameter list
+error.h(18): Error! E1009: Expecting ',' but found ')'
+error.h(18): Error! E1026: Invalid declarator
+error.h(19): Error! E1022: Missing or misspelled data type near 'exit'
+error.h(19): Error! E1009: Expecting ')' but found '1'
+error.h(19): Error! E1024: Declared symbol 'exit' is not in parameter list
+error.h(19): Error! E1147: Too many errors: compilation aborted

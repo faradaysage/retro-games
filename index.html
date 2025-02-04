@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Retro DOS Games</title>
+
+    <!-- JS-DOS Styles & Script -->
+    <link rel="stylesheet" href="https://v8.js-dos.com/latest/js-dos.css">
+    <script src="https://v8.js-dos.com/latest/js-dos.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: black;
+            color: white;
+        }
+        .game-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        .game {
+            margin: 20px;
+            padding: 10px;
+            border: 2px solid white;
+            cursor: pointer;
+            width: 300px;
+            background: rgba(255,255,255,0.1);
+            transition: background 0.3s, border 0.3s;
+        }
+        .game img {
+            width: 100%;
+        }
+        .game.selected {
+            background: rgba(255, 255, 255, 0.3);
+            border: 3px solid yellow;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Retro DOS Games</h1>
+    <p>Click a game to play in your browser</p>
+
+    <div class="game-container">
+        <div class="game" id="game-nowhere" onclick="loadGame('nowhere.jsdos', this)">
+            <img src="https://yourwebsite.com/Images/Portfolio_Software_NorthOfNowhere.PNG" alt="North of Nowhere">
+            <p>North of Nowhere</p>
+        </div>
+        <div class="game" id="game-troll" onclick="loadGame('troll.jsdos', this)">
+            <img src="https://yourwebsite.com/Images/Portfolio_Software_Troll.PNG" alt="Troll">
+            <p>The Adventures of Something That Looks Like an Evil Troll</p>
+        </div>
+        <div class="game" id="game-ltperry" onclick="loadGame('ltperry.jsdos', this)">
+            <img src="https://yourwebsite.com/Images/Portfolio_Software_LtPerry.PNG" alt="Lt. Perry">
+            <p>Lt. Perry: Operation Keish</p>
+        </div>
+    </div>
+
+    <div id="dosbox" style="width: 80%; height: 480px; margin: auto;"></div>
+
+    <script>
+        function loadGame(gameFile, element) {
+            // Remove highlight from all games
+            document.querySelectorAll('.game').forEach(game => game.classList.remove('selected'));
+            
+            // Highlight the selected game
+            element.classList.add('selected');
+            
+            // Load the game in JS-DOS
+            Dos(document.getElementById("dosbox")).run("games/" + gameFile, {
+                disablePersistentStorage: true
+            });
+        }
+
+        // Automatically load "North of Nowhere" on page load
+        window.onload = function() {
+            loadGame('nowhere.jsdos', document.getElementById('game-nowhere'));
+        };
+    </script>
+
+</body>
+</html>

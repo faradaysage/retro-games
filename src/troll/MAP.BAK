@@ -1,0 +1,97 @@
+#ifndef MAP_H
+#define MAP_H
+
+#include <stdio.h>
+#include <dos.h>
+#include "error.h"
+
+#define ENTRY_SIZE 10
+
+#define SetValue(x,y)    y=(((~(1<<4))&(y))|((x)<<4))
+#define GetValue(y)      ((y)>>4)
+#define SetBit(x,y,z)    if((z)==0) y=((~(1<<(x)))&(y)); else y=((1<<(x))|(y))
+#define GetBit(x,y)      (((1<<(x))&(y))>>(x))
+
+enum bit_tag { passable=0, enemy, object, attainable };
+
+/* each entry contains 4 bits with a value of TRUE or FALSE
+	least significant:  passable
+	.                   enemy
+	.                   object
+	.                   attainable
+	the last 4-bits are the id;
+*/
+typedef struct map_tag {
+	char **table;
+	char num_i,num_j;   /* number i and j */
+} map_type;
+
+void MakeMap(map_type **map, vbackground_type *background);
+void DestroyMap(map_type **map );
+void SaveMap( char *filename, map_type *map );
+void OpenMap( char *filename, map_type **map );
+
+void OpenMap( char *filename, map_type **map ) {
+	int handle, i;
+	char num_i, num_j;
+
+	if( (handle = open( filename, O_BINARY | O_RDONLY )) == -1 )
+		Error( "Couldn't open file.\n" );
+	_read( handle, &num_i, sizeof(char) );
+	_read( handle, &num_j, sizeof(char) );
+	if( ((*map)=(map_type *)malloc( sizeof( map_type ) )) == NULL )
+		Error( "Not enough memory.\n" );
+	if( ((*map)->table=(char **)malloc( sizeof(char *)*num_i )) == NULL )
+		Error( "Not enough memory.\n" );
+	for(i=0; i<num_i; ++i )
+		if( ((*map)->table[i]=(char *)malloc( sizeof(char)*num_j )) == NULL )
+			Error( "Not enough memory.\n" );
+	_read(handle, (*map), sizeof(map_type) );
+	_read(handle, (*map)->table, sizeof(char **)*num_i );
+	for(i=0; i<num_i; ++i )
+		_read(handle, (*map)->table[i], sizeof(char)*num_j );
+	_close(handle);
+}
+
+void SaveMap( char *filename, map_type *map ) {
+	int handle, i;
+
+	if( (handle = open( filename, O_CREAT | O_BINARY | O_RDWR )) == -1 )
+		Error( "could not create file.\n" );
+	_write(handle, &(map->num_i), sizeof(char) );
+	_write(handle, &(map->num_j), sizeof(char) );
+	_write(handle, map, sizeof(map_type) );
+	_write(handle, map->table, sizeof(char **)*map->num_i );
+	for(i=0; i<map->num_i; ++i )
+		_write(handle, map->table[i], sizeof(char)*map->num_j );
+	_close(handle);
+}
+
+void MakeMap(map_type **map, vbackground_type *background) {
+	int i, num_i, num_j;
+
+	num_i = (background->width-ENTRY_SIZE)/ENTRY_SIZE;
+	num_j = (background->height-ENTRY_SIZE)/ENTRY_SIZE;
+
+	if( ((*map) = (map_type *)malloc( sizeof( map_type ) )) == NULL )
+		Error( "Not enough memory.\n" );
+	if( ((*map)->table = (char **)malloc( sizeof( char *)*num_i )) == NULL )
+		Error( "Not enough memory.\n" );
+	for(i=0; i<num_i; ++i )
+		if( ((*map)->table[i] = (char *)malloc( sizeof( char )*num_j )) == NULL )
+			Error( "Not enough memory.\n" );
+
+	(*map)->num_i = num_i;
+	(*map)->num_j = num_j;
+}
+
+void DestroyMap(map_type **map ) {
+	int i;
+
+	for(i=0; i<((*map)->num_i); ++i )
+		free( (*map)->table[i] );
+	free( (*map)->table );
+	free( (*map) );
+}
+
+#endif

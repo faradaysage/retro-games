@@ -1,0 +1,20 @@
+#include "objects.h"
+#include "sprite.h"
+
+sprite_type *dummy;
+sprite_type *dummy2;
+object_info_type info;
+object_type *test;
+
+void main() {
+	dummy=dummy2+1;
+	MakeObjectList( &test, &info, dummy );
+	AddObject( test, &info, dummy );
+	AddObject( test, &info, dummy2 );
+	AddObject( test, &info, dummy );
+	AddObject( test, &info, dummy );
+	printf( "Objects = %d\n", NumObjectsInList( test ) );
+	RemoveObject( test, dummy2 );
+	printf( "Objects = %d\n", NumObjectsInList( test ) );
+	DestroyObjectList( &test );
+}

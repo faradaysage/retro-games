@@ -1,0 +1,25 @@
+INSTRUCTIONS
+------------
+CHAT:
+F1 to start game
+
+GAME:
+UP	- Accelerate ship
+LEFT	- Rotate ship left
+RIGHT	- Rotate ship right
+A	- Zoom In Radar
+Z	- Zoom Out Radar
+SPACE	- Fire weapon (not fully functional)
+
+In 1-player Mode
+F1-F4 - switch between controlling different ships
+
+Multi-player:
+Install IPX drivers, maximum of 4 players currently supported.
+
+----------------
+Brian Groose		-	briang@wpi.edu
+Carleton Jillson	-	carleton@wpi.edu
+Dan Ginsburg		-	ginsburg@wpi.edu
+Brian Kasper		-	jhoward@wpi.edu
+Josh Taylor		-	void@wpi.edu

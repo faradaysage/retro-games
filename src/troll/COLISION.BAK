@@ -1,0 +1,180 @@
+#ifndef COLISION_H
+#define COLISION_H
+
+#define MAXBULLETS 50
+
+#include "sprite.h"
+#include "map.h"
+#include "objects.h"
+
+#define GetIPos(sprite, background) ((((sprite)->ulx+((sprite)->cel[(sprite->frames*sprite->facing)+sprite->curframe]->height/2))+(background)->actual->ulx)/ENTRY_SIZE)
+#define GetJPos(sprite, background) (((sprite)->uly+(sprite)->cel[(sprite->frames*sprite->facing)+sprite->curframe]->width)+(background)->actual->uly)/ENTRY_SIZE;
+
+char num_bullets=0;
+
+/* changed in CheckCollision(), used in HandleCollision() */
+int last_x, last_y;  /* if sprite runs into unpassable position restore to last position */
+
+typedef struct collision_tag {   /* for collisions in map */
+	 char value;
+	 char passable;
+	 char enemy;
+	 char object;
+	 char attainable;
+} collision_type;
+
+typedef struct bullet_collision_tag{
+	sprite_type *sprite[MAXBULLETS];
+	sprite_type *bullet[MAXBULLETS];
+	char num_collisions;
+} bullet_collision_type;
+
+
+/* CheckCollision() and HandleCollision() deal with collisions in map,
+	not with sprites */
+collision_type *CheckCollision( background_type *background, sprite_type *sprite );
+void HandleCollision( collision_type *collision, background_type *background, sprite_type *sprite );
+
+/* CheckSpriteCollision() checks for a collision between a sprite (passed)
+	and an object list (passed) */
+sprite_type *CheckSpriteCollision( sprite_type *sprite, object_type *object_list );
+int SpritesTouching( sprite_type *sprite1, sprite_type *sprite2 );
+
+
+bullet_collision_type *CheckBulletCollision( object_type *list );
+void HandleBulletCollision( bullet_collision_type *bullet_collision, object_type **list );
+
+void HandleBulletCollision( bullet_collision_type *bullet_collision, object_type **list ){
+	for(i=0; i<bullet_collision->num_collisions; ++i ){
+		RemoveObject( list, bullet_collision->sprite[i] );
+		RemoveObject( list, bullet_collision->bullet[i] );
+	}
+}
+
+bullet_collision_type *CheckBulletCollision( object_type *list ){
+	object_type *head=list;
+	sprite_type *sprite_collided;
+	static bullet_collision_type bullet_collision;
+
+	bullet_collision.num_collisions = 0;
+	while( list != NULL ){
+		if( list->info->status == bullet_obj ){
+			sprite_collided = CheckSpriteCollision( list->sprite, head );
+			if( sprite_collided != NULL ){
+				bullet_collision.sprite[bullet_collision.num_collisions] = sprite_collided;
+				bullet_collision.bullet[bullet_collision.num_collisions] = list->sprite;
+				++bullet_collision.num_collisions;
+			}
+		}
+		list = list->next;
+	}
+	return( &bullet_collision );
+}
+
+/* precondition: sprites bitmaps are overlapping */
+/* returns 1 if both sprites current bitmaps overlap a non-zero color */
+int SpritesTouching( sprite_type *sprite1, sprite_type *sprite2 ){
+	int x_s1, x_s2;
+	int start_x_s1, start_x_s2;
+
+	int y_s1, y_s2;
+	int start_y_s1, start_y_s2;
+
+	int max_x_s1 = sprite1->cel[0]->width,
+		 max_x_s2 = sprite2->cel[0]->width,
+		 max_y_s1 = sprite1->cel[0]->height,
+		 max_y_s2 = sprite2->cel[0]->height;
+
+	if( sprite1->ulx < sprite2->ulx ){
+		x_s1 = start_x_s1 = (sprite2->ulx - sprite1->ulx);
+		x_s2 = start_x_s2 = 0;
+	}
+	else{
+		x_s1 = start_x_s1 = 0;
+		x_s2 = start_x_s2 = (sprite1->ulx - sprite2->ulx);
+	}
+	if( sprite1->uly < sprite2->uly ){
+		y_s1 = start_y_s1 = (sprite2->uly - sprite1->uly);
+		y_s2 = start_y_s2 = 0;
+	}
+	else{
+		y_s1 = start_y_s1 = 0;
+		y_s2 = start_y_s2 = (sprite1->uly - sprite2->uly);
+	}
+	/* while not at end of one bitmap */
+	while( (y_s1 < max_y_s1) && (y_s2 < max_y_s2) ) {
+		if( (sprite1->cel[ CelIndexNum(sprite1) ]->bitmap[ x_s1+(y_s1*max_x_s1) ] != 0 ) &&
+			 (sprite2->cel[ CelIndexNum(sprite2) ]->bitmap[ x_s2+(y_s2*max_x_s2) ] != 0 ) )
+			return( 1 );   /* found collision */
+		++x_s1;
+		++x_s2;
+		if( x_s1 >= max_x_s1 || x_s2 >= max_x_s2 ){ /* move to next (x,y) */
+			++y_s1;
+			++y_s2;
+			x_s1 = start_x_s1;
+			x_s2 = start_x_s2;
+		}
+	}
+	return( 0 ); /* didn't find a collsion */
+}
+
+sprite_type *CheckSpriteCollision( sprite_type *sprite, object_type *object_list ){
+	int mb_sprite = MidBottomY(sprite);
+	int mb_object;
+	int place_in_sprite_x, place_in_sprite_y;
+	int sprite_max_x = sprite->ulx+sprite->cel[0]->width,
+		 object_max_x;
+
+	while( object_list != NULL ){
+		mb_object = MidBottomY(object_list->sprite);
+		/* if sprite in y range of object */
+		if( ((mb_sprite <  (mb_object+OBJECT_RADIUS)) && (mb_sprite > (mb_object-OBJECT_RADIUS))) && (object_list->sprite != sprite) ){
+			/* if sprite in x range (bitmaps overlapping) of object */
+			object_max_x = object_list->sprite->ulx+object_list->sprite->cel[0]->width;
+			if( ((sprite_max_x >= object_list->sprite->ulx) && (sprite_max_x <= object_max_x)) ||
+				 ((object_max_x >= sprite->ulx) && (object_max_x <= sprite_max_x)) ){
+				if( SpritesTouching(sprite, object_list->sprite) )
+					return( object_list->sprite );
+			}
+		}
+		object_list = object_list->next;
+	}
+	return( NULL );  /* couldn't find a collision */
+}
+
+
+void HandleCollision( collision_type *collision, background_type *background, sprite_type *sprite ) {
+	if( collision->passable == 0 ) {
+				/* move to last passable place */
+		sprite->ulx = last_x - background->actual->ulx;
+		sprite->uly = last_y - background->actual->uly;
+	}
+}
+
+
+/* CheckCollision()
+	check for collision between sprite & background
+	return statistics of the collision */
+
+collision_type *CheckCollision( background_type *background, sprite_type *sprite ) {
+	static collision_type collision;
+	int i, j;  /* place in background->map that sprite is in */
+
+	i = GetIPos( sprite, background );
+	j = GetJPos( sprite, background );
+
+	collision.value = GetValue( background->map->table[i][j] );
+	collision.passable = GetBit( passable, background->map->table[i][j] );
+	collision.enemy = GetBit( enemy, background->map->table[i][j] );
+	collision.object = GetBit( object, background->map->table[i][j] );
+	collision.attainable = GetBit( attainable, background->map->table[i][j] );
+
+	if( collision.passable ) {  /* remember last passable place */
+		last_x = background->actual->ulx + sprite->ulx;
+		last_y = background->actual->uly + sprite->uly;
+	}
+
+	return( &collision );
+}
+
+#endif
