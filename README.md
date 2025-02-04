@@ -9,7 +9,7 @@ A collection of DOS games and demos I developed in the late '90s and early 2000s
 Each game/demo is stored in `.jsdos` format for easy web-based play and has its original **source code** available in the `/src/` directory.
 
 ## 🎮 Play Online
-You can play these games directly in your browser: **[GitHub Pages Link]** (replace with actual URL).
+You can play these games directly in your browser: **[https://faradaysage.github.io/retro-games/]**.
 
 ---
 
@@ -24,7 +24,6 @@ You can play these games directly in your browser: **[GitHub Pages Link]** (repl
   - Custom-built **graphics, animation, and physics engines**.
   - Effects like **lens distortions, water/jelly physics, and real-time lighting**.
   - **No third-party libraries** were used except for sound support.
-- **Controls:** See `/src/north_of_nowhere/readme.txt`
 
 ---
 
@@ -55,7 +54,7 @@ You can play these games directly in your browser: **[GitHub Pages Link]** (repl
 ## 📜 Source Code
 The original source code for each game is included in the `/src/` directory, along with **readme.txt** files that explain **controls and mechanics**.
 
-- **`/src/north_of_nowhere/`** - Contains the 3D engine and rendering code.
+- **`/src/nowhere/`** - Contains the 3D engine and rendering code.
 - **`/src/troll/`** - Contains all game logic, AI, and graphics.
 - **`/src/ltperry/`** - Early game development techniques and sprite-based rendering.
 
