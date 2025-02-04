@@ -69,10 +69,11 @@
             // Highlight the selected game
             element.classList.add('selected');
             
-            // Load the game in JS-DOS
-			Dos(document.getElementById("dosbox"), {
+            // Initialize the emulator with cloud storage disabled
+            Dos(document.getElementById("dosbox"), {
 				url: "games/" + gameFile,
-				disablePersistentStorage: true
+				disablePersistentStorage: true,
+				disableCloud: true // ✅ Prevents the cloud storage prompt
 			});
         }
 
