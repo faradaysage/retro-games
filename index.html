@@ -70,9 +70,10 @@
             element.classList.add('selected');
             
             // Load the game in JS-DOS
-            Dos(document.getElementById("dosbox")).run("games/" + gameFile, {
-                disablePersistentStorage: true
-            });
+			Dos(document.getElementById("dosbox"), {
+				url: "games/" + gameFile,
+				disablePersistentStorage: true
+			});
         }
 
         // Automatically load "North of Nowhere" on page load
